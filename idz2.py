@@ -31,30 +31,39 @@ class Fraction:
         """Возвращает максимальный размер для целой и дробной частей."""
         return self.size
 
-    def read(self):
-        """Ввод целой и дробной частей числа с клавиатуры."""
-        integer = input("Введите целую часть числа (беззнаковое целое число): ")
-        fractional = input("Введите дробную часть числа (после запятой): ")
+    def add_fraction(self, other):
+        """Перегрузка операции сложения для двух дробей."""
+        if not isinstance(other, Fraction):
+            raise TypeError("Операнд должен быть объектом типа Fraction.")
 
-        # Заполняем целую часть (разворачиваем, т.к. младшая цифра должна иметь меньший индекс)
-        for i, digit in enumerate(integer[::-1]):
-            if i >= len(self.integer_part):
-                break
-            self.integer_part[i] = int(digit)
-        # Заполняем дробную часть
-        for i, digit in enumerate(fractional):
-            if i >= len(self.fractional_part):
-                break
-            self.fractional_part[i] = int(digit)
+        max_integer_size = max(len(self.integer_part), len(other.integer_part))
+        max_fractional_size = max(len(self.fractional_part), len(other.fractional_part))
 
-        self.count = len(integer) + len(fractional)
+        result = Fraction(max_integer_size, max_fractional_size)
+        carry = 0
 
-    def display(self):
-        """Выводит дробное число на экран."""
-        integer_str = ''.join(map(str, self.integer_part[::-1]))  # Выводим целую часть в правильном порядке
-        fractional_str = ''.join(map(str, self.fractional_part))  # Выводим дробную часть
+        for i in range(max_fractional_size - 1, -1, -1):
+            sum_value = carry
+            if i < len(self.fractional_part):
+                sum_value += self.fractional_part[i]
+            if i < len(other.fractional_part):
+                sum_value += other.fractional_part[i]
 
-        print(f"Число: {integer_str}.{fractional_str}")
+            result.fractional_part[i] = sum_value % 10
+            carry = sum_value // 10
+
+        for i in range(max_integer_size):
+            sum_value = carry
+            if i < len(self.integer_part):
+                sum_value += self.integer_part[i]
+            if i < len(other.integer_part):
+                sum_value += other.integer_part[i]
+
+            result.integer_part[i] = sum_value % 10
+            carry = sum_value // 10
+
+        result.count = result.get_size()
+        return result
 
     def __getitem__(self, index):
         """Перегрузка операции индексирования [] для доступа к элементам целой или дробной части."""
@@ -77,85 +86,55 @@ class Fraction:
         else:
             raise IndexError("Индекс выходит за пределы числа.")
 
-    def __add__(self, other):
-        """Перегрузка операции сложения для двух дробей."""
-        if not isinstance(other, Fraction):
-            raise TypeError("Операнд должен быть объектом типа Fraction.")
-
-        max_integer_size = max(len(self.integer_part), len(other.integer_part))
-        max_fractional_size = max(len(self.fractional_part), len(other.fractional_part))
-
-        # Инициализация нового объекта для результата
-        result = Fraction(max_integer_size, max_fractional_size)
-
-        carry = 0  # Перенос для сложения
-        # Складываем дробные части
-        for i in range(max_fractional_size - 1, -1, -1):
-            sum_value = carry
-            if i < len(self.fractional_part):
-                sum_value += self.fractional_part[i]
-            if i < len(other.fractional_part):
-                sum_value += other.fractional_part[i]
-
-            result.fractional_part[i] = sum_value % 10
-            carry = sum_value // 10
-
-        # Складываем целые части
-        for i in range(max_integer_size):
-            sum_value = carry
-            if i < len(self.integer_part):
-                sum_value += self.integer_part[i]
-            if i < len(other.integer_part):
-                sum_value += other.integer_part[i]
-
-            result.integer_part[i] = sum_value % 10
-            carry = sum_value // 10
-
-        result.count = result.get_size()  # Обновляем количество элементов
-        return result
-
-    def __sub__(self, other):
-        """Перегрузка операции вычитания для двух дробей."""
-        # Принцип аналогичен сложению, но требуется учесть заимствование.
-        # Для упрощения можно реализовать вычитание после приведения к нормальной форме.
-
-        # Тут должно быть более сложное вычитание, но ради примера можно ограничиться
-        # простым шаблоном (например, если одно число больше другого по модулю).
-        pass
-
-    def __mul__(self, other):
-        """Перегрузка операции умножения для двух дробей."""
-        # Реализация умножения (например, по длинным десятичным числам с учетом дробной части).
-        pass
-
-    def __eq__(self, other):
-        """Перегрузка операции сравнения на равенство для двух дробей."""
-        return (self.integer_part == other.integer_part and
-                self.fractional_part == other.fractional_part)
-
     def __repr__(self):
-        """Представление объекта для вывода."""
         return f"Fraction({self.integer_part}, {self.fractional_part})"
 
 
-# Демонстрация работы класса
+class FractionIO:
+    @staticmethod
+    def read_fraction(integer_size, fractional_size):
+        """Ввод целой и дробной частей числа с клавиатуры."""
+        integer = input("Введите целую часть числа (беззнаковое целое число): ")
+        fractional = input("Введите дробную часть числа (после запятой): ")
+
+        fraction = Fraction(integer_size, fractional_size)
+
+        for i, digit in enumerate(integer[::-1]):
+            if i >= len(fraction.integer_part):
+                break
+            fraction.integer_part[i] = int(digit)
+
+        for i, digit in enumerate(fractional):
+            if i >= len(fraction.fractional_part):
+                break
+            fraction.fractional_part[i] = int(digit)
+
+        fraction.count = len(integer) + len(fractional)
+        return fraction
+
+    @staticmethod
+    def display_fraction(fraction):
+        """Выводит дробное число на экран."""
+        integer_str = ''.join(map(str, fraction.integer_part[::-1]))
+        fractional_str = ''.join(map(str, fraction.fractional_part))
+        print(f"Число: {integer_str}.{fractional_str}")
+
+
 if __name__ == '__main__':
-    # Создаем два объекта Fraction
-    fraction1 = Fraction(5, 3)
-    fraction2 = Fraction(5, 3)
+    # Создаём два объекта Fraction через ввод
+    fraction1 = FractionIO.read_fraction(5, 3)
+    fraction2 = FractionIO.read_fraction(5, 3)
 
-    # Ввод данных для дробей
-    fraction1.read()
-    fraction2.read()
+    # Выводим дроби
+    print("\nПервая дробь:")
+    FractionIO.display_fraction(fraction1)
+    print("Вторая дробь:")
+    FractionIO.display_fraction(fraction2)
 
-    # Вывод дробей на экран
-    fraction1.display()
-    fraction2.display()
-
-    # Пример сложения
+    # Пример сложения дробей
     print("\nСложение двух дробей:")
-    result = fraction1 + fraction2
-    result.display()
+    result = fraction1.add_fraction(fraction2)
+    FractionIO.display_fraction(result)
 
     # Пример работы индексации
     print("\nДоступ к элементам через индексацию:")
@@ -165,4 +144,5 @@ if __name__ == '__main__':
     # Пример изменения значения через индексацию
     fraction1[0] = 9
     fraction1[5] = 5
-    fraction1.display()
+    print("\nИзменённая первая дробь:")
+    FractionIO.display_fraction(fraction1)
